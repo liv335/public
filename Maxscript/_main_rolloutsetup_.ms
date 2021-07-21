@@ -1,3 +1,16 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- Rollout experiments - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- Rollout testing setup
+-- using newRolloutFloater add rollouts to rollouts
+-- theOutput, a rollout log interface prints text -- can be useful to print data logs
+-- theOutputAdmin, rollout with User and Pw, using base64 as an encription inside the script, buildin decoder for testing
+-- theOutputPreview, random draw experiment, checkbox for draw click and drag to draw inside a canvas
+-- theOutpustList, simple multilistBox to store values, add/remove buttons , stores them unqiue
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
 	-- the main floater
 	global theMainRollout -- atempts to close rollout if already is open

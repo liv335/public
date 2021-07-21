@@ -1,3 +1,12 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- callback experiment - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- script for automatic readouts when selecting
+-- added some buttons to change wirecolors
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
 	if RLT_displayInfo != undefined then (destroyDialog RLT_displayInfo) else (RLT_displayInfo = undefined)
 	global RLT_displayInfo

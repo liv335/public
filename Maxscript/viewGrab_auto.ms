@@ -1,3 +1,12 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- viewgrabber - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- when do all cameras checkes does for each camera in scenes grabs/saves screenshots
+-- otherwise grabs/saves screenshot of viewport with safe frame active
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
 	global RLT_autoScreenGrab
 	try (if RLT_autoScreenGrab != undefined then destroyDialog RLT_autoScreenGrab; RLT_autoScreenGrab = undefined) catch()

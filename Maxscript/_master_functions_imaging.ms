@@ -1,3 +1,13 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- Fast Screenshot - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- Makes a screenshot taking into account safe frame of viewport
+-- Can save image directly
+-- Can show image
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
 	/*
 	grabViewport safe frame screenshot

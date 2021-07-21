@@ -1,6 +1,14 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- files functions - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- fileDateNumber checks modified date of file, returns number of seconds since creation
+-- pathLibfile works returns parts of a path, parent, suffix, exists
+-- uniqueID creates a unique string based on current time
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
-	theFile = "C:\\Users\\335\Documents\\3dsMax\\_script\\VrayMtl.txt"
-	theFileDeux = "C:\\Users\\335\\Documents\\3dsMax\\_script\\VrayHdri.txt"
 	/*
 	return an integer based on the date, use to compare to find latest modified file
 	*/

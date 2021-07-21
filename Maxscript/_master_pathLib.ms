@@ -1,9 +1,16 @@
+------------------------------------------------------------------------------------------------------------------------------
+-- Data functions - 21/07/2021
+-- Script by Trifan Liviu
+-- Contact: https://www.linkedin.com/in/liviu-t-94975536/
+-- pothlib, similar to python pathlib
+-- Cheers 
+------------------------------------------------------------------------------------------------------------------------------
+
 (
 	fn pathFile fileCheck: =
 	(
 		local filterFile = (filterstring fileCheck "\\")
 		local fileName = (filterString (filterFile[filterFile.count]) ".")
-		--local extension = (substring (filterFile[filterFile.count]) (fileName[1].count+1) fileCheck.count)
 		struct theFileStruct
 		(
 			fullPath,
