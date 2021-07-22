@@ -7,6 +7,10 @@ import os, shutil, json, numpy as np, time
 from colorama import init, Fore
 init(autoreset=True)
 
+"""
+Tool designed to produce a special sheet for art direction, takes images base on name complies them together.
+"""
+
 # Frame 0
 def bnt_frm0_click():
     if bnt_frm0.config('text')[(-1)] == 'On_frame_1st':

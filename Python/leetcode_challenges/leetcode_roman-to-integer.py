@@ -37,7 +37,8 @@ class Solution:
         return num
         #"""
 
-#test_vals = [1994,3,100,55,777,1249]
-test_vals = ["MCMXCIV","III","C","LV","DCCLXXVII","MCCXLIX","MMMCCIII"]
-for t in test_vals:
-    print("\nresult",Solution().romanToInt(t), "input", t,"\n")
+if __name__ == '__main__':
+    #test_vals = [1994,3,100,55,777,1249]
+    test_vals = ["MCMXCIV","III","C","LV","DCCLXXVII","MCCXLIX","MMMCCIII"]
+    for t in test_vals:
+        print("\nresult",Solution().romanToInt(t), "input", t,"\n")

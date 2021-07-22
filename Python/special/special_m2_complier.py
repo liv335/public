@@ -1,4 +1,6 @@
-# This script was created for INDG to complie m2 presets for AkzoNobel
+"""
+Tool designed to produce take input and create a special pack shot image
+"""
 # added GUI
 
 from tkinter import filedialog

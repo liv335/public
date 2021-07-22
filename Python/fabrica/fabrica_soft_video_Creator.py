@@ -81,6 +81,7 @@ def startcmd(value):
 
 def runApp():
     pass
+
 runApp()
 # main variables
 #localPath = r"C:\Users\335\Documents\3dsMax\scenes\00007_gabyTest"
