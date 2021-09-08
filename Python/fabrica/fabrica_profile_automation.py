@@ -3,8 +3,8 @@ import shutil
 from PIL import Image
 from pathlib import Path
 
-__all__ = ["FoldersSubfoldersProfileCreator","create_folders"
-           "AddBackgroundToImages","specific_add","general_add"
+__all__ = ["FoldersSubfoldersProfileCreator","create_folders","__create_subfolders"
+           "AddBackgroundToImages","specific_add","general_add","__addbackground"
            "MoveFilesToFoldersName","move_to_folders"]
 
 class FoldersSubfoldersProfileCreator:
@@ -31,7 +31,7 @@ class FoldersSubfoldersProfileCreator:
                 try:
                     os.makedirs(create_folder_path)
                     print("Success::Folder Created::" + create_folder_path)
-                    __create_subfolders(create_folder_path, subfolders_to_create = list_subfolders_to_create)
+                    self.__create_subfolders(create_folder_path, subfolders_to_create = list_subfolders_to_create)
                 except FileExistsError:
                     print("Warning::Folder Exists::" + f)
         else:
@@ -57,9 +57,9 @@ class AddBackgroundToImages:
             background.save(filesave)
 
     # loop for specific files
-    def specific_add(self, image_names, image_locations, colors = [(255,255,255),(153,153,153)]):
+    def specific_add(self, image_names, locations = None, colors = [(255,255,255),(153,153,153)]):
         ext = ".png"
-        for imloc in image_locations:
+        for imloc in locations:
 
             # for each location
             for im in image_names:
@@ -70,12 +70,12 @@ class AddBackgroundToImages:
                     for cs in colors:
                         print("Processing:: " + file)
                         the_image = Image.open(file)
-                        __addbackground(the_image,cs)
+                        self.__addbackground(the_image,cs)
                 else:
                     print("Not found ::" + file)
 
     # adds background based on name pattern
-    def general_add(self, pattern = "bk",locations = None):
+    def general_add(self, pattern = "bk", locations = None, colors = [(255,255,255),(153,153,153)]):
         if locations is not None:
 
             for imloc in locations:
@@ -89,7 +89,7 @@ class AddBackgroundToImages:
 
                             print("Processing:: " + str(f))
                             the_image = Image.open(str(f))
-                            __addbackground(the_image,cs)
+                            self.__addbackground(the_image,cs)
                     else:
                         print("Not found::" + str(f))
 
