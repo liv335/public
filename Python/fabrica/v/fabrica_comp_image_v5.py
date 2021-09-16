@@ -1,9 +1,10 @@
-# fabrica image combiner
+# requires ffmpeg.exe
+# combines different images to produce a new one, to produce permutations.
 # created by Trifan Liviu , https://www.linkedin.com/in/liviu-t-94975536/
 
 import tkinter as tk
 from tkinter import *
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, simpledialog
 from PIL import Image as Img, ImageTk
 from pathlib import Path
 import zipfile
@@ -15,7 +16,7 @@ def update_tool(i):
     # clear lists, check .f files from inputs, load items in lists
     clearlist(list_box_array[i])
     arch_fab = var_local.get() + os.sep + special_content_folder + os.sep + special_filename + str(i) + special_filesuffix
-    loadlist(getfilesfromfzip(zip_data_path = arch_fab), list_box_array[i])
+    loadlist(get_files_from_fzip(zip_data_path = arch_fab), list_box_array[i])
 
 def open_folder():
     # check folder if exists, open folder windows explorer
@@ -36,6 +37,23 @@ def loadsave():
             update_tool(i)
 
 # canvas
+def check_aspect(w, h, b_size = 700):
+    if h > w:
+        ar = w/h
+        w = b_size
+        h = b_size * ar
+    elif h < w:
+        ar = h/w
+        w = b_size * ar
+        h = b_size
+    else:
+        h = b_size
+        w = b_size
+    return int(h) ,int(w)
+def app_resize(h = 800, w = 800):
+    app.minsize(h, w)
+    app.maxsize(h, w)
+
 def load_canvas(the_image = None):
     # load image into canvas
     if the_image is None:
@@ -46,27 +64,21 @@ def load_canvas(the_image = None):
     canvas.img = ImageTk.PhotoImage(image = the_image)
     canvas.create_image(0, 0, anchor = NW, image=canvas.img)
     canvas.config(width = the_image.width, height = the_image.height)
-def resize_image(image, viewer_size = 800):
+def resize_image(image):
     # resize image
     if image is not None:
-        re_size = None
-        a_r = (image.width / image.height)
+        a_r = check_aspect(image.width, image.height)
 
-        w_image = viewer_size
-        h_image = viewer_size * (1 / a_r)
+        h_image = a_r[0]
+        w_image = a_r[1]
 
-        if w_image > h_image:
-            re_size = image.resize((int(w_image), int(h_image)), Img.ANTIALIAS)
-        elif w_image < h_image:
-            re_size = image.resize((int(w_image), int(h_image)), Img.ANTIALIAS)
-        elif w_image == h_image:
-            re_size = image.resize((int(viewer_size), int(viewer_size)), Img.ANTIALIAS)
+        re_size = image.resize((int(h_image), int(w_image)), Img.ANTIALIAS)
         return re_size
     else:
         messagebox.showwarning("Error", "Missing Base Render File")
 
 # zip functions
-def getfilesfromfzip(zip_data_path = None):
+def get_files_from_fzip(zip_data_path = None):
     # get files from fzip
     array_file_items = []
     if os.path.exists(zip_data_path):
@@ -75,12 +87,12 @@ def getfilesfromfzip(zip_data_path = None):
             for c in content_list:
                     array_file_items.append(c)
     return array_file_items
-def openzip(zip_data_path = None, file = None):
+def open_zip(zip_data_path = None, file = None):
     if os.path.exists(zip_data_path) and zip_data_path is not None and file is not None and file != "None":
         with zipfile.ZipFile(zip_data_path, "r") as zip_data:
             # content_list = zip_data.namelist()
             return zip_data.open(file)
-def readconfig(file):
+def read_config(file):
     remove_char = [";","\'","\""," ","\n"]
     pattern = []
     with open(file) as f:
@@ -90,6 +102,15 @@ def readconfig(file):
                 line = line.replace(i,"")
             pattern.append(line.replace(" ","").split("="))
         return (pattern[0][1].split(",")),(pattern[1][1].split(","))
+def change_bool_of_var():
+    var_the_order_override.set(var_the_order_override.get())
+    if var_the_order_override.get():
+        the_order = simpledialog.askstring("Change Order", "Enter New Order - Input won't be checked\n EX: 0,1,2,3,4 for 5 inputs can be 4,0,1,3,2")
+        if the_order is not None and the_order != "" and len(the_order.split(",")) == var_number_inputs.get():
+            var_new_order.set(the_order)
+        else:
+            the_checkbox.deselect()
+            messagebox.showinfo("Error","Invalid Input")
 
 # run combine image
 def combine_local(main_file = "base_render.png"):
@@ -97,17 +118,22 @@ def combine_local(main_file = "base_render.png"):
     content_location = var_local.get() + os.sep + special_content_folder
     baseimage = content_location + os.sep + main_file
 
+    the_order = list(range(var_number_inputs.get()))
+    if var_the_order_override.get():
+        the_order = var_new_order.get()
+        the_order = [int(i) for i in the_order.split(",")]
+
     base = None
     if os.path.exists(baseimage):
         image = Img.open(baseimage)
         base = Img.new(image.mode, image.size)
         base.paste(image)  # load base image
 
-        for n in range(var_number_inputs.get()):
+        for n in the_order:
             entry_value = entry_array[n].get()
             location = content_location + os.sep + special_filename + str(n) + special_filesuffix
             if os.path.exists(location) and entry_value != "None":
-                thepas = Img.open(openzip(zip_data_path = location, file = entry_value))
+                thepas = Img.open(open_zip(zip_data_path = location, file = entry_value))
                 base.paste(thepas, (0, 0), thepas)
             else:
                 # print (location +" ::not found") # disabled
@@ -118,6 +144,7 @@ def combine_local(main_file = "base_render.png"):
 # save -- saves at location
 def show_image():
     the_resized = resize_image(combine_local())
+    app_resize(w = (the_resized.height + 220))
     load_canvas(the_image = the_resized)
 def save_image(output_file_name = "output" ,ext = ".png"):
     save_location = var_local.get() + os.sep + output_file_name + ext
@@ -213,6 +240,12 @@ if __name__ == "__main__":
     size_height_list = 8
     number_inputs = 5  # 5 used for testing
 
+    var_the_order_override = BooleanVar()
+    var_the_order_override.set(False)
+
+    var_new_order = StringVar()
+    var_new_order.set("0,1,2,3,4")
+
     var_number_inputs = IntVar()
     var_number_inputs.set(number_inputs)
 
@@ -285,6 +318,11 @@ if __name__ == "__main__":
     )
     button_load_location.pack(side = "left")
 
+    the_checkbox = Checkbutton(frm_entry_main, text="Override Order",
+                               variable=var_the_order_override, onvalue=1, offvalue=0)
+    the_checkbox.config(command = change_bool_of_var)
+    the_checkbox.pack(side = "left")
+
     # create interface
     var_array = {}
     entry_array = {}
@@ -314,11 +352,11 @@ if __name__ == "__main__":
     # app geometry
     title_name = "Profile Combine "
     title_version = "v 1.0"
-    app_size_height = 800
-    app_size_width = 850
+    app_s_h = 800
+    app_s_w = 800
 
     app.title(title_name + title_version)
-    app.minsize(app_size_width, app_size_height)
-    app.maxsize(app_size_width, app_size_height)
+    app.minsize(app_s_h, app_s_w)
+    app.maxsize(app_s_h, app_s_w)
 
     app.mainloop()

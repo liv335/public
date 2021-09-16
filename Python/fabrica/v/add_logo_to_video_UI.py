@@ -34,26 +34,40 @@ def clear(frame_load):
         print(l)
         if button_load_ffmpeg.config("text")[(-1)] == "Load ff":
             l.destory()
-
 def make_temp(loc, name):
     temp_file_name = "temp"
     if not os.path.exists(loc + os.sep + temp_file_name):
         os.makedirs(loc + os.sep + temp_file_name)
     name_blank = (loc + os.sep + temp_file_name + os.sep + name)
     return name_blank
+
+def check_aspect(w, h, b_size = 700):
+    # define height, width, and base size
+    # find aspect ration and resize image to have the largest of the two, to the b_size(base size)
+    # return integers
+    if h > w:
+        ar = w/h
+        w = b_size
+        h = b_size * ar
+    elif h < w:
+        ar = h/w
+        w = b_size * ar
+        h = b_size
+    else:
+        h = b_size
+        w = b_size
+    return int(h) ,int(w)
 def resize_image(image, image_size = 100):
     # resize image
     # image needs to be PIL Image
+    # resize image
     if image is not None:
-        re_size = None
-        w_image = image_size
-        h_image = image_size * (1 / (image.width / image.height))
-        if w_image > h_image:
-            re_size = image.resize((int(w_image), int(h_image)), Img.ANTIALIAS)
-        elif w_image < h_image:
-            re_size = image.resize((int(w_image), int(h_image)), Img.ANTIALIAS)
-        elif w_image == h_image:
-            re_size = image.resize((int(image_size), int(image_size)), Img.ANTIALIAS)
+        a_r = check_aspect(image.width, image.height, b_size = image_size)
+
+        h_image = a_r[0]
+        w_image = a_r[1]
+
+        re_size = image.resize((int(h_image), int(w_image)), Img.ANTIALIAS)
         return re_size
     else:
         messagebox.showwarning("Error", "Missing Base Render File")
@@ -73,8 +87,8 @@ def check_locations(file):
 def run_command_cmd(value):
     terminal = 'cmd'
     #command = 'Python'
-    #command = terminal + ' ' + '/c' + ' ' + value
-    command = terminal + ' ' + '/K' + ' ' + value
+    command = terminal + ' ' + '/c' + ' ' + value
+    #command = terminal + ' ' + '/K' + ' ' + value
     # /K keeps the command prompt open when execution takes place
     # CREATE_NEW_CONSOLE opens a new console
     subprocess.Popen(command, creationflags=CREATE_NEW_CONSOLE)
@@ -106,11 +120,20 @@ def run_app():
         output_full_path = the_save_loc + os.sep + output_filename + output_filesuffix
 
         # filter options
-        complex_filter = "\"overlay=x=main_w-overlay_w-(main_w*0.01):y=main_h-overlay_h-(main_h*0.01)\""
+        radio_button_option = var_radio.get()
+        complex_filter = "overlay"
+        if radio_button_option == "bottom right":
+            complex_filter = "\"overlay=x=main_w-overlay_w-(main_w*0.01):y=main_h-overlay_h-(main_h*0.01)\""
+        elif radio_button_option == "bottom left":
+            complex_filter = "\"overlay=x=main_w*0.01:y=main_h-overlay_h-(main_h*0.01)\""
+        elif radio_button_option == "top right":
+            complex_filter = "\"overlay=x=main_w-overlay_w-(main_w*0.01):y=main_h*0.01\""
+        elif radio_button_option == "top left":
+            complex_filter = "\"overlay=x=main_w*0.01:y=main_h*0.01\""
+            pass
         # command
         the_command = f"{ffmpeg_loc} -y -i {the_video} -i {logo_resized_loc} -filter_complex {complex_filter} {output_full_path}"
 
-        print(the_command)
         run_command_cmd(the_command)
 
 if __name__ == "__main__":
@@ -122,9 +145,14 @@ if __name__ == "__main__":
     var_logo_size = IntVar()
     var_logo_size.set(100)
 
+    var_radio = StringVar()
+    var_radio.set("bottom right")
+
+    # testing variables
     testing_location = r"C:\_work\_script\ffmpeg\bin\ffmpeg.exe"
     ffmpeg_location = testing_location
 
+    # ffmpeg location
     local_ffmpeg_location = os.getcwd() + os.sep + "app" + os.sep + "ffmpeg.exe"
     if os.path.exists(local_ffmpeg_location):
         ffmpeg_location = local_ffmpeg_location
@@ -178,11 +206,17 @@ if __name__ == "__main__":
     button_run = Button(app, text="Make Video", command = run_app, width = 15, height = 2, bg = "#93A689")
     button_run.pack(pady = 1,padx =35 ,side="right")
 
+    # radio button
+    radio_button_selection = [("bottom right", "bottom right"), ("bottom left", "bottom left"), ("top left", "top left"), ("top right", "top right")]
+
+    for text, mode in radio_button_selection:
+        btnradio2 = Radiobutton(frame_option, text = text, variable = var_radio, value=mode)
+        btnradio2.pack(side="left",padx=2)
+
     if not os.path.exists(var_ffmpeg.get()):
         button_load_ffmpeg = Button(app, text="Load ff", command=load_ffmpeg,
                                     width=15, height=2, fg="black", bg="red", state="normal")
-        button_load_ffmpeg.pack(pady=1, padx=35, side="left")
-
+        button_load_ffmpeg.pack(pady=1, padx=35, side="top")
     # app
     title_name = "Add Logo to Mp4 "
     title_version = "v 1.0"

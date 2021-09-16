@@ -4,15 +4,16 @@
 # created by Trifan Liviu , https://www.linkedin.com/in/liviu-t-94975536/
 
 from tkinter import *
-from tkinter import filedialog,messagebox,colorchooser,simpledialog
-from PIL import Image ,ImageFont, ImageDraw
+from tkinter import filedialog, messagebox, colorchooser, simpledialog
+from PIL import Image as Img ,ImageFont, ImageDraw
 import subprocess
 from subprocess import Popen, CREATE_NEW_CONSOLE
+import shutil
 import os
 
 def load(i):
     path = filedialog.askopenfilename()
-    if path != "":
+    if path != "" and check_file_suffx(path , suffix = ".png"):
         input_array[i].set(path)
         checkbox_array[i].deselect()
         bool_array[i] = False
@@ -29,6 +30,14 @@ def check_file(loc):
         except ValueError:
             break
     return loc
+def check_file_suffx(filepath, suffix = ".png"):
+    if suffix in filepath:
+        return True
+    else:
+        messagebox.showinfo("Error", f"File needs to be {suffix}")
+        return False
+def change_bool_of_var(i):
+    bool_array[i] = not bool_array[i]
 
 def text_wrap(text,font,writing,max_width,max_height):
     lines = [[]]
@@ -54,12 +63,11 @@ def text_wrap(text,font,writing,max_width,max_height):
     return '\n'.join([' '.join(line) for line in lines])
 def add_text(imag, color, pos, text_size, text_write, boxsize):
     the_font = var_font.get()
-    imag = Image.open(imag)
+    imag = Img.open(imag)
     draw = ImageDraw.Draw(imag)
     font = ImageFont.truetype(the_font, text_size)
 
     text_write = text_wrap(text_write, font, draw, boxsize[0], boxsize[1])
-    #print(font.getsize(textWrite)[0])
 
     draw.text(pos, text_write, color, font = font)
     imag.save(imag.filename)
@@ -69,25 +77,36 @@ def check_image_input(imag, imag2): # to do general check // maybe normalize ima
     the_check = False
     the_size = (0,0)
     try:
-        imag = Image.open(imag)
-        imag2 = Image.open(imag2)
+        imag = Img.open(imag)
+        imag2 = Img.open(imag2)
         the_check = (imag.size[1] == imag2.size[1] and imag.size[0] == imag2.size[0])
         the_size = imag.size
     except FileNotFoundError:
         pass
     return the_check, the_size
+def create_temp_folder(loc, temp_folder):
+    the_temp_folder = loc + os.sep + temp_folder
+    if not os.path.exists(the_temp_folder):
+        os.makedirs(the_temp_folder)
 def create_blank_image(loc, size, name, color):
-    if not os.path.exists(loc + "/temp/"):
-        os.makedirs(loc + "/temp/")
-    blank_image_file = (loc + "/temp/" + name)
-    blank_image_background = Image.new("RGB", size, color)
+    # define and create temp folder
+    the_temp_folder = "temp"
+    create_temp_folder(loc, the_temp_folder)
+    # define and create blank image, return file name
+    blank_image_file = (loc + os.sep + the_temp_folder + os.sep + name)
+    blank_image_background = Img.new("RGB", size, color)
     blank_image_background.save(blank_image_file)
-    return blank_image_file
-def change_bool_of_var(i):
-    bool_array[i] = not bool_array[i]
 
-def remove_temp_files(loc):
-    os.remove(loc)
+    return blank_image_file
+
+def remove_temp_files():
+    loc = var_saveloc.get() + os.sep + "temp"
+    if os.path.exists(loc):
+        if messagebox.askokcancel("Delete Temp?","Do you want to delete temp folder from save location, action cannot be undone"):
+            shutil.rmtree(loc)
+            messagebox.showinfo("Info", "Temp file deleted")
+    else:
+        messagebox.showinfo("Info", "Temp Folder doesn't exists")
 def run_command_cmd(value):
     terminal = 'cmd'
     #command = 'Python'
@@ -106,15 +125,169 @@ def choose_color_text():
 def choose_font_text():
     # variable to store hexadecimal code of color
     path = filedialog.askopenfilename()
-    print(path[-4:])
-    if path[-4:] == ".otf" or path[-4:] == ".ttf":
+    font_suffix = path[-4:]
+    if (font_suffix == ".otf" or font_suffix == ".ttf") and font_suffix != "":
         var_font.set(path)
+        messagebox.showinfo("New font selected",f"New Font Found At : {path}")
+    else:
+        if font_suffix != ".ttf" and font_suffix != "":
+            check_file_suffx(path, suffix= ".ttf")
+        elif font_suffix != ".otf" and font_suffix != "":
+            check_file_suffx(path, suffix=".otf")
 def create_blank_add_text(local_path, image_size, temp_name_prefix, color, text, text_color, text_pos, text_size, b):
     # to prevent text repeating
-    input_create_blank = create_blank_image(local_path, image_size, temp_name_prefix + f"{b}.png", color)
+    temp_name = f"{b}.png"
+    input_create_blank = create_blank_image(local_path, image_size, temp_name_prefix + temp_name, color)
     add_text(input_create_blank, text_color, text_pos, text_size, text, image_size)
     return input_create_blank
 
+def test_something():
+    pass
+
+def check_aspect(w, h, b_size = 700):
+    # define height, width, and base size
+    # find aspect ration and resize image to have the largest of the two, to the b_size(base size)
+    # return integers
+    if h > w:
+        ar = w/h
+        w = b_size
+        h = b_size * ar
+    elif h < w:
+        ar = h/w
+        w = b_size * ar
+        h = b_size
+    else:
+        h = b_size
+        w = b_size
+    return int(h) ,int(w)
+def resize_image(image, image_size = 100):
+    # resize image
+    # image needs to be PIL Image
+    # resize image
+    if image is not None:
+        a_r = check_aspect(image.width, image.height, b_size = image_size)
+
+        h_image = a_r[0]
+        w_image = a_r[1]
+
+        re_size = image.resize((int(h_image), int(w_image)), Img.ANTIALIAS)
+        return re_size
+
+def normalize_size_image(image_list):
+    # takes images location
+    max_pixel_size_dict = {}
+    max_pixel_size_array = []
+    for i in range(len(image_list)):
+        # load image
+        load_image = Img.open(image_list[i])
+        # define array, dict
+        pixels_in_image = load_image.height * load_image.width
+        max_pixel_size_array.append(pixels_in_image)
+        max_pixel_size_dict[pixels_in_image] = (load_image.width, load_image.height)
+    # return max height, width
+    return max_pixel_size_dict[sorted(max_pixel_size_array, reverse = True)[0]]
+def resize_image_add_temp(local_path, temp_name_prefix ,image_path, b, image_size = (1920, 1080)):
+    temp_name = f"{b}.png"
+    the_temp_folder = "temp"
+
+    create_temp_folder(local_path, the_temp_folder)
+    name_image_temp = local_path + os.sep + the_temp_folder + os.sep + temp_name_prefix + temp_name
+
+    resized_image = Img.open(image_path)
+    resized_image = resize_image(resized_image, sorted(image_size, reverse = True)[0])
+    resized_image.save(name_image_temp)
+    return name_image_temp
+
+def resolution_setup(size = (1920, 1080)):
+    # adjust resolution var
+    var_height.set(size[1])
+    var_width.set(size[0])
+def create_interface(local_max):
+    # array inputs
+    for i in range(local_max):
+        # labels
+        label_text = input_label_values[i:i+1] # slice to prevent error
+        entry_text = input_text_array[i:i+1] # slice to prevent error
+
+        if len(label_text) == 0:
+            label_text = "Extra Input"
+        else:
+            label_text = input_label_values[i]
+        if len(entry_text) == 0:
+            entry_text = "Another Input"
+        else:
+            entry_text = input_text_array[i]
+
+        the_label = Label(frm_top, text = label_text)
+        label_array[i] = the_label
+        label_array[i].pack()
+
+        # string variable
+        var_input = StringVar()
+        input_array[i] = var_input
+        input_array[i].set(entry_text)
+
+        # bool variable
+        var_bool = BooleanVar()
+        bool_array[i] = var_bool
+        bool_array[i].set(True)
+
+        # entry box
+        the_frame = Frame(frm_top)
+        frame_array[i] = the_frame
+        frame_array[i].pack(side = "top")
+
+        the_entry = Entry(frame_array[i], width = 50, textvariable = input_array[i], state = "normal")
+        entry_array[i] = the_entry
+        entry_array[i].pack(side = "left")
+
+        the_button = Button(frame_array[i], text="Load Input",
+                            width = 10, height = 1, bg = "grey", state = "normal")
+        button_array[i] = the_button
+        button_array[i].pack(side = "left")
+        exec(f"button_array[{i}].config(command = lambda:load({i}))")
+
+        the_checkbox = Checkbutton(frame_array[i], text="text",
+                                   variable = bool_array[i], onvalue = 1, offvalue = 0)
+        checkbox_array[i] = the_checkbox
+        exec(f"checkbox_array[{i}].config(command = lambda:change_bool_of_var({i}))")
+        checkbox_array[i].pack(side = "left")
+
+def add_delete_button():
+    button_delete_option.destroy()
+    button_delete_temp = Button(frm_run, text="Clear Temp Files", command=remove_temp_files, width=15, height=1, bg="orange")
+    button_delete_temp.pack(side="right", padx = 1)
+def change_inputs():
+    # ask for inputs
+    new_max = simpledialog.askinteger("Enter new Input","New Max Inputs, max = 8")
+    if new_max is not None:
+        if new_max > 8:
+            messagebox.showinfo("Error", "Max 8 inputs otherwise will flip fast between frames")
+            new_max = 8
+        elif new_max < 1:
+            messagebox.showinfo("Error", "Min input 1")
+            new_max = 1
+        var_maxinputs.set(new_max)
+
+    # destory tkiner objects
+    for p in range(len(entry_array)):
+        label_array[p].destroy()
+        #input_array[p].destroy()
+        #bool_array[p].destroy()
+        frame_array[p].destroy()
+        entry_array[p].destroy()
+        button_array[p].destroy()
+        checkbox_array[p].destroy()
+    # remake interface
+    create_interface(var_maxinputs.get())
+
+    local_size_min = 500
+    local_size_max = 180 + 45 * var_maxinputs.get()
+
+    app.title('Fast Video Creator')
+    app.minsize(local_size_min, local_size_max)
+    app.maxsize(local_size_min, local_size_max)
+    pass
 def run_app():
     # main variables
     local_path = var_saveloc.get()
@@ -122,6 +295,7 @@ def run_app():
 
     # color variables
     temp_filename = "blank"
+    temp_image_filename = "image"
     white = (255, 255, 255)
     black = (0, 0, 0)
 
@@ -130,10 +304,21 @@ def run_app():
     duration = int(var_duration.get() / max_inputs)
 
     # check inputs, determin text size position
-    the_input_checked = (True, (2560, 1920))
+    image_collection = []
+    for b in range(len(input_array)):
+        if os.path.exists(input_array[b].get()) and not bool_array[b]:
+            image_collection.append(input_array[b].get())
+    # check how many image files are found
+    if len(image_collection) != 0:
+        max_size = normalize_size_image(image_collection)
+    else:
+        max_size = (var_width.get(), var_height.get())
+
+    the_input_checked = (True, max_size)
     text_size = int(the_input_checked[1][1] * (var_textsize.get() / 100))
     text_pos_y = (the_input_checked[1][1] / 2) - text_size / 2
 
+    print(max_size)
     if os.path.exists(local_path) and os.path.exists(local_ffmpeg_loc):
         save_path = check_file(local_path + "/" + "out1.mp4")
         # colors
@@ -145,28 +330,24 @@ def run_app():
 
         ######## the input needs to be improved validate inputs get resolution.
 
-        if the_input_checked[0]:
+        print((the_input_checked[1][0] % 2), (the_input_checked[1][1] % 2))
+        if the_input_checked[0] and (the_input_checked[1][0] % 2) == 0 and (the_input_checked[1][1] % 2) == 0:
             # create/define inputs text or image
             inputs = {}
             # too lazy to optimize now
             for b in range(len(bool_array)):
                 if bool_array[b]:
                     text = input_array[b].get()
-
-                    #input_create_blank = createBlankImage(localPath, theInput[1], temp_filename + f"{b}.png", white)
-                    #addtext(input_create_blank, theTextColor, (50, posY), textSize, text, (theInput[1][0] - 50, theInput[1][1] - 50))
-
-                    inputs[b] = create_blank_add_text(local_path, the_input_checked[1], temp_filename, white, text, the_text_color, (50, text_pos_y), text_size, b)
+                    inputs[b] = create_blank_add_text(local_path, the_input_checked[1], temp_filename, white, text,
+                                                      the_text_color, (50, text_pos_y), text_size, b)
                 else:
                     if os.path.exists(input_array[b].get()):
-                        inputs[b] = input_array[b].get()
+                        the_input = resize_image_add_temp(local_path, temp_image_filename, input_array[b].get(), b, max_size)
+                        inputs[b] = the_input
                     else:
                         text = "Failed::" + input_array[b].get()
-
-                        #input_create_blank = createBlankImage(localPath, theInput[1], temp_filename + f"{b}.png", white)
-                        #addtext(input_create_blank, theTextColor, (50, posY), textSize, text,(theInput[1][0] - 50, theInput[1][1] - 50))
-
-                        inputs[b] = create_blank_add_text(local_path, the_input_checked[1], temp_filename, white, text, the_text_color, (50, text_pos_y), text_size, b)
+                        inputs[b] = create_blank_add_text(local_path, the_input_checked[1], temp_filename, white,
+                                                          text, the_text_color, (50, text_pos_y), text_size, b)
             # define the inputs string
             the_inputs = []
             the_complex_filter_loop = []
@@ -189,7 +370,6 @@ def run_app():
 
             # define complex filter loop phase 2
             for i in range(max_inputs):
-                print(i)
                 if i == 0:
                     f_i = f"[{i}]"
                 else:
@@ -224,95 +404,10 @@ def run_app():
             print(the_command)
             run_command_cmd(the_command)
         else:
-            messagebox.showinfo("Error","Something went wrong, inputs, missing files")
-            print("Error: something went wrong, inputs, missing files")
+            messagebox.showinfo("Error","Something went wrong\n>>Check inputs\n>>Check resolution (resolution divisible by 2)")
         pass
     else:
         messagebox.showinfo("Error", "Check Save Path or ff location")
-def test_something():
-    pass
-
-def create_interface(local_max):
-    # array inputs
-    for i in range(local_max):
-        # labels
-
-        label_text = input_label_values[i:i+1] # slice to prevent error
-        entry_text = input_text_array[i:i+1] # slice to prevent error
-
-        if len(label_text) == 0:
-            label_text = "Extra Input"
-        else:
-            label_text = input_label_values[i]
-        if len(entry_text) == 0:
-            entry_text = "Other Input"
-        else:
-            entry_text = input_text_array[i]
-
-        the_label = Label(frm_top, text = label_text)
-        label_array[i] = the_label
-        label_array[i].pack()
-
-        # string variable
-        var_input = StringVar()
-        input_array[i] = var_input
-        input_array[i].set(entry_text)
-
-        # bool variable
-        var_bool = BooleanVar()
-        bool_array[i] = var_bool
-        bool_array[i].set(True)
-
-        # entry box
-        the_frame = Frame(frm_top)
-        frame_array[i] = the_frame
-        frame_array[i].pack(side = "top")
-
-        the_entry = Entry(frame_array[i], width = 50, textvariable = input_array[i])
-        entry_array[i] = the_entry
-        entry_array[i].pack(side = "left")
-
-        the_button = Button(frame_array[i], text="Load Input",
-                            width = 10, height = 1, bg = "grey", state = "normal")
-        button_array[i] = the_button
-        button_array[i].pack(side = "left")
-        exec(f"button_array[{i}].config(command = lambda:load({i}))")
-
-        the_checkbox = Checkbutton(frame_array[i], text="text",
-                                   variable = bool_array[i], onvalue = 1, offvalue = 0)
-        checkbox_array[i] = the_checkbox
-        exec(f"checkbox_array[{i}].config(command = lambda:change_bool_of_var({i}))")
-        checkbox_array[i].pack(side = "left")
-def change_inputs():
-    # ask for inputs
-    new_max = simpledialog.askinteger("Enter new Input","New Max Inputs, max = 8")
-    if new_max > 8:
-        messagebox.showinfo("Error", "Max 8 inputs otherwise will flip fast between frames")
-        new_max = 8
-    elif new_max < 1:
-        messagebox.showinfo("Error", "Min input 1")
-        new_max = 1
-    var_maxinputs.set(new_max)
-
-    # destory tkiner objects
-    for p in range(len(entry_array)):
-        label_array[p].destroy()
-        #input_array[p].destroy()
-        #bool_array[p].destroy()
-        frame_array[p].destroy()
-        entry_array[p].destroy()
-        button_array[p].destroy()
-        checkbox_array[p].destroy()
-    # remake interface
-    create_interface(var_maxinputs.get())
-
-    local_size_min = 500
-    local_size_max = 180 + 45 * var_maxinputs.get()
-
-    app.title('Fast Video Creator')
-    app.minsize(local_size_min, local_size_max)
-    app.maxsize(local_size_min, local_size_max)
-    pass
 
 if __name__ == "__main__":
     #Create window
@@ -339,6 +434,15 @@ if __name__ == "__main__":
     var_textcolor.set("(0.0,0.0,0.0)")
     var_maxinputs = IntVar()
     var_maxinputs.set(4)
+
+    # resolution
+    default_h = 1080
+    default_w = 1920
+
+    var_height = IntVar()
+    var_height.set(default_h)
+    var_width = IntVar()
+    var_width.set(default_w)
 
     var_saveloc = StringVar()
     var_saveloc.set("Select Folder Path")
@@ -407,11 +511,14 @@ if __name__ == "__main__":
     entry_distribution.pack(side="left")
 
     # run
-    button_run = Button(frm_top, text="Make Video", command = run_app,
+    frm_run = Frame(frm_top)
+    frm_run.pack(side="top")
+    button_run = Button(frm_run, text="Make Video", command = run_app,
                         width = 15, height = 2, bg = "green")
-    button_run.pack()
-    #button_test = Button(frm_top, text="Test", command=testSomething, width=15, height=2, bg='green')
-    #button_test.pack()
+    button_run.pack(side="left",padx = 100)
+
+    button_delete_option = Button(frm_run, text="", command=add_delete_button, width=1, height=1, bg="white")
+    button_delete_option.pack(side = "left")
 
     # create dynamic interface
     #input_text_array = ["Input %s" % s for s in range(var_maxinputs.get())]
